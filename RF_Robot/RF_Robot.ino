@@ -7,10 +7,10 @@
 #define MAX_DIST  50
 #define VEL       10
 
-//Servos Continuos: write define velocidade
+//Continuous Servos: self.write defines ang. velocity
 Servo RodaE;
 Servo RodaD;
-//Micro Servos: write define angulo
+//Micro Servos: self.write defines the angle
 Servo BaseSonar;
 Servo RodaF;
 
@@ -29,70 +29,70 @@ void loop()
 
     int uS = sonar.ping();
     int DS = uS / US_ROUNDTRIP_CM;
-    if (DS <= 5 && DS != 0)
+    if (DS > 5 || DS == 0)
     {
-      //Deixa o robot parado
+      //Walk foward indefinitedly
+      RodaE.write(180 - VEL);
+      RodaD.write(VEL);
+    }
+    else
+    {
+      //Stop the robot
       RodaE.write(90);
       RodaD.write(90);
 
       int BestAngle = 0;
       int BestDist = 0;
-      //Varre todo o angulo de visão do robot (180)
+      //Linear search in robot FOV (0 - 180)
       for (int i = 0; i <= 180; i++)
       {
-        //Posiciona o sonar nesse angulo
+        //Set 'i' as the angle of the sonar servo
         BaseSonar.write(i);
-        //Realiza a medida
+        //Check the distance
         int uS = sonar.ping();
         int DS = uS / US_ROUNDTRIP_CM;
         delay(10);
-        //Se a distancia for a maior ate agora
+        //If the distance DS is greater than the previous best distance...
         if (DS > BestDist)
         {
-          //entao eh a melhor distancia
+          //then DS is the new best distance
           BestDist = DS;
-          //e o melhor angulo
+          //and 'i' is the new best angle
           BestAngle = i;
         }
       }
-      //Posiciona o sonar para frente
+      //Set the sonar servo to the default position
       BaseSonar.write(90);
-      //Recua o robo
+      //Move robot backwards
       RodaE.write(0);
       RodaD.write(180);
-      //Espera 1s para a manobra
+      // Wait 1s to finish the movement
       delay(1000);
       
-      //Melhor angulo eh na Direita?
+      //If the best angle found is in the Right
       if (BestAngle > 90)
       {
-        //Roda da Frente vira 45 graus para a Direita
+        //Turn the directional wheel pi/4 to the Right
         RodaF.write(45);
-        //Roda Esquerda em velocidade maxima para frente
+        //Left wheel foward
         RodaE.write(180);
-        //Roda Direita fica parada
+        //Right wheel stops
         RodaD.write(90);
       }
-      //Melhor angulo eh na Esquerda?
+      //If the best angle found is in the Left
       else if (BestAngle <= 90)
       {
-        //Roda da Frente vira 45 graus para a Esquerda
+        //Turn the directional wheel pi/4 to the Left
         RodaF.write(180 - 45);
-        //Roda Esquerda fica parada
+        //Left wheel stops
         RodaE.write(90);
-        //Roda Direita em velocidade maxima para frente
+        //Right wheel foward
         RodaD.write(0);
       }
-      //Espera 1s para a manobra
+      //TODO: Time is related to the angle...
       delay(1000);
-      //Vira a roda da frente para a frente
+      //Turn the directional wheel fowards
       RodaF.write(90);
-    }
-    else
-    {
-      //ande para frente como se nao houvesse amanha
-      RodaE.write(180 - VEL);
-      RodaD.write(VEL);
     }
   }
 }
